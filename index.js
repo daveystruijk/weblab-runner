@@ -89,7 +89,6 @@ const switchMode = function() {
     { name: 'url', type: String },
     { name: 'src', type: String },
     { name: 'test', type: String },
-    { name: 'debug', type: Boolean },
   ]);
   if (!args.url || !args.src || !args.test) {
     return console.log(`Usage: weblab-runner
