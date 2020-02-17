@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "command-line-args": "5.1.1",
+    "html-entities": "1.2.1",
     "puppeteer": "2.1.1"
   }
 }

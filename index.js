@@ -2,6 +2,8 @@ const fs = require('fs');
 const readline = require('readline');
 const puppeteer = require('puppeteer');
 const commandLineArgs = require('command-line-args');
+const HtmlEntities = require('html-entities').AllHtmlEntities;
+const htmlEntities = new HtmlEntities();
 
 const COOKIE_PATH = './cookies.json';
 var SPEC_TEST = false
@@ -111,10 +113,10 @@ const switchMode = function() {
     await visit(page, url, '#maincontainer');
   }
 
-	// Log compiler output
+  // Log compiler output
   await page.exposeFunction('outputChanged', (text) => {
-		console.log(`${FgBlue}${text}${Reset}`);
-	});
+    console.log(`${FgBlue}${htmlEntities.decode(text)}${Reset}`);
+  });
   await page.waitFor(2000);
   await page.evaluate(() => {
     var el = document.querySelector('#compilerOutput');
