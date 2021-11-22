@@ -55,6 +55,7 @@ const signIn = async function(page) {
 
 const downloadContents = async function(page, index, filename) {
   const contents = await page.evaluate((index) => {
+    // TODO: Ace editor has been replaced with monaco
     return window.aceEditorInstances[index].session.getValue();
   }, index);
   await fs.promises.writeFile(filename, contents, 'utf8');
@@ -63,6 +64,7 @@ const downloadContents = async function(page, index, filename) {
 const uploadContents = async function(page, index, filename) {
   const contents = await fs.promises.readFile(filename, 'utf8');
   await page.evaluate((index, contents) => {
+    // TODO: Ace editor has been replaced with monaco
     window.aceEditorInstances[index].session.setValue(contents);
   }, index, contents);
   await page.waitFor(400);
@@ -119,9 +121,9 @@ const switchMode = function() {
   });
   await page.waitFor(2000);
   await page.evaluate(() => {
-    var el = document.querySelector('#compilerOutput');
+    var el = document.querySelector('#consoleOutput');
     var obs = new MutationObserver(function(e) {
-      const text = document.querySelector('#compilerOutputPre').innerHTML.trim();
+      const text = document.querySelector('#consoleOutputPre').innerHTML.trim();
       window.outputChanged(text);
     });
     obs.observe(el, { characterData: true, childList: true });
