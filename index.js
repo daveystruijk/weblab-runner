@@ -17,7 +17,7 @@ FgMagenta = "\x1b[35m"
 FgCyan = "\x1b[36m"
 FgWhite = "\x1b[37m"
 
-const visit = async function(page, url, waitForSelector) {
+const visit = async (page, url, waitForSelector) => {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   if (waitForSelector) {
     await page.waitForSelector(waitForSelector,
@@ -25,12 +25,12 @@ const visit = async function(page, url, waitForSelector) {
   }
 };
 
-const saveCookies = async function(page) {
+const saveCookies = async (page) => {
   const cookies = await page.cookies();
   return fs.promises.writeFile(COOKIE_PATH, JSON.stringify(cookies, null, 2));
 };
 
-const loadCookies = async function(page) {
+const loadCookies = async (page) => {
   try {
     const cookiesString = await fs.promises.readFile(COOKIE_PATH);
     const cookies = JSON.parse(cookiesString);
@@ -44,7 +44,7 @@ const loadCookies = async function(page) {
   }
 };
 
-const signIn = async function(page) {
+const signIn = async (page) => {
   await visit(page, 'https://weblab.tudelft.nl/samlsignin');
   console.log("Not logged in yet, please login to WebLab.");
   await page.waitForResponse('https://weblab.tudelft.nl/', { timeout: 0 });
@@ -53,36 +53,40 @@ const signIn = async function(page) {
   await saveCookies(page);
 };
 
-const downloadContents = async function(page, index, filename) {
+const downloadContents = async (page, index, filename) => {
   const contents = await page.evaluate((index) => {
-    // TODO: Ace editor has been replaced with monaco
-    return window.aceEditorInstances[index].session.getValue();
+    const editorInfoKey = Object.keys(window).find(
+      (key) => key.startsWith('editorInfo_') && window[key].editor._id === index
+    );
+    return window[editorInfoKey].editor.getValue();
   }, index);
   await fs.promises.writeFile(filename, contents, 'utf8');
 };
 
-const uploadContents = async function(page, index, filename) {
+const uploadContents = async (page, index, filename) => {
   const contents = await fs.promises.readFile(filename, 'utf8');
   await page.evaluate((index, contents) => {
-    // TODO: Ace editor has been replaced with monaco
-    window.aceEditorInstances[index].session.setValue(contents);
+    const editorInfoKey = Object.keys(window).find(
+      (key) => key.startsWith('editorInfo_') && window[key].editor._id === index
+    );
+    window[editorInfoKey].editor.setValue(contents);
   }, index, contents);
   await page.waitFor(400);
 };
 
-const runTest = async function(page, spec) {
+const runTest = async (page, spec) => {
   const saveButton = await page.$('#visibleSave');
   await saveButton.click();
   await page.waitForSelector('.save-button.saved', { visible: true });
   await page.waitFor(2000);
-  const selector = spec === true ? '#specTestBtn' : '#userTestBtn';
+  const selector = spec === true ? '.specTestBtn' : '.userTestBtn';
   const testButton = await page.$(selector);
   await testButton.click();
   const modeStr = SPEC_TEST === false ? 'Your Test' : 'Spec Test';
   console.log(`${FgYellow}Running ${modeStr}${Reset}`);
 };
 
-const switchMode = function() {
+const switchMode = () => {
   SPEC_TEST = !SPEC_TEST;
   const modeStr = SPEC_TEST === false ? 'Your Test' : 'Spec Test';
   console.log(`${FgRed}Mode: ${modeStr}${Reset}`);
@@ -129,8 +133,8 @@ const switchMode = function() {
     obs.observe(el, { characterData: true, childList: true });
   });
 
-  await downloadContents(page, 0, args.src);
-  await downloadContents(page, 1, args.test);
+  await downloadContents(page, 1, args.src);
+  await downloadContents(page, 2, args.test);
 
   console.log(`Downloaded ${args.src}, watching changes...`);
   console.log(`Downloaded ${args.test}, watching changes...`);
@@ -139,13 +143,13 @@ const switchMode = function() {
 
   fs.watchFile(args.src, async (stat) => {
     console.log(`${FgYellow}Changed: ${args.src}${Reset}`);
-    await uploadContents(page, 0, args.src);
+    await uploadContents(page, 1, args.src);
     await runTest(page, SPEC_TEST);
   });
 
   fs.watchFile(args.test, async (time) => {
     console.log(`${FgYellow}Changed: ${args.test}${Reset}`);
-    await uploadContents(page, 1, args.test);
+    await uploadContents(page, 2, args.test);
     await runTest(page, SPEC_TEST);
   });
 
